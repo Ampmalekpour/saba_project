@@ -1,20 +1,37 @@
 "use client";
 
-import { Spin } from "antd";
+import { Alert, Button, Spin } from "antd";
 
 import { MachineStatusOverview } from "@/features/dashboard/MachineStatusOverview";
 import { RecentAlerts } from "@/features/dashboard/RecentAlerts";
 import { SummaryCards } from "@/features/dashboard/SummaryCards";
 import { useDashboard } from "@/hooks/useDashboard";
+import { getErrorMessage } from "@/lib/errors";
 
 export default function Home() {
-  const { data, isLoading } = useDashboard();
+  const { data, isLoading, isError, error, refetch, isFetching } = useDashboard();
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Spin />
       </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <Alert
+        type="error"
+        message="Failed to load dashboard"
+        description={getErrorMessage(error, "Could not reach the API.")}
+        action={
+          <Button size="small" loading={isFetching} onClick={() => refetch()}>
+            Retry
+          </Button>
+        }
+        showIcon
+      />
     );
   }
 

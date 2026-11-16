@@ -14,6 +14,8 @@ class Machine(Base):
     location: Mapped[str] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(String(20), default="offline")
     temperature: Mapped[float] = mapped_column(Float, default=0.0)
-    last_updated: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    last_updated: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     alerts = relationship("Alert", back_populates="machine", cascade="all, delete-orphan")

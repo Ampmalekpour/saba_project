@@ -1,19 +1,28 @@
 "use client";
 
-import { Button, Table, Tag } from "antd";
+import { Alert as AntAlert, Button, Table, Tag, message } from "antd";
 
 import { Badge } from "@/components/ui/badge";
 import { useAcknowledgeAlert, useAlerts } from "@/hooks/useAlerts";
 import { useMachines } from "@/hooks/useMachines";
+import { getErrorMessage } from "@/lib/errors";
 import type { Alert } from "@/types/alert";
 
 export function AlertsTable() {
-  const { data: alerts, isLoading } = useAlerts();
+  const [messageApi, contextHolder] = message.useMessage();
+  const { data: alerts, isLoading, isError, error, refetch, isFetching } = useAlerts();
   const { data: machines } = useMachines();
   const acknowledge = useAcknowledgeAlert();
 
   const machineName = (machineId: number) =>
     machines?.find((m) => m.id === machineId)?.name ?? `#${machineId}`;
+
+  const handleAcknowledge = (id: number) => {
+    acknowledge.mutate(id, {
+      onSuccess: () => messageApi.success("Alert acknowledged"),
+      onError: (err) => messageApi.error(getErrorMessage(err, "Failed to acknowledge alert")),
+    });
+  };
 
   const columns = [
     {
@@ -47,20 +56,47 @@ export function AlertsTable() {
       key: "actions",
       render: (_: unknown, record: Alert) =>
         !record.acknowledged && (
-          <Button size="small" onClick={() => acknowledge.mutate(record.id)}>
+          <Button
+            size="small"
+            loading={acknowledge.isPending}
+            onClick={() => handleAcknowledge(record.id)}
+          >
             Acknowledge
           </Button>
         ),
     },
   ];
 
+  if (isError) {
+    return (
+      <>
+        {contextHolder}
+        <AntAlert
+          type="error"
+          message="Failed to load alerts"
+          description={getErrorMessage(error, "Could not reach the API.")}
+          action={
+            <Button size="small" loading={isFetching} onClick={() => refetch()}>
+              Retry
+            </Button>
+          }
+          showIcon
+        />
+      </>
+    );
+  }
+
   return (
-    <Table
-      rowKey="id"
-      loading={isLoading}
-      dataSource={alerts}
-      columns={columns}
-      pagination={{ pageSize: 10 }}
-    />
+    <>
+      {contextHolder}
+      <Table
+        rowKey="id"
+        loading={isLoading}
+        dataSource={alerts}
+        columns={columns}
+        pagination={{ pageSize: 10 }}
+        locale={{ emptyText: "No alerts" }}
+      />
+    </>
   );
 }
