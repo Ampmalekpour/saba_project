@@ -15,6 +15,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 alembic upgrade head
+python -m app.seed
 uvicorn app.main:app --reload
 ```
 
@@ -37,8 +38,17 @@ App runs at http://localhost:3000.
 docker compose up --build
 ```
 
+The backend container runs migrations and seeds data automatically on startup.
+
 Backend: http://localhost:8000, Frontend: http://localhost:3000.
+
+## Features
+
+- Dashboard with machine/alert counts and status overview
+- Machine CRUD with search and status filter
+- Alerts list with severity and acknowledge action
+- Rule-based temperature anomaly detection (>80°C high, 65-80°C medium), triggered on machine create/update
 
 ## Status
 
-Milestone 1 complete: project scaffolding, configuration, and Docker setup.
+All milestones complete: backend API, frontend dashboard, machine/alert management, and Docker setup.
